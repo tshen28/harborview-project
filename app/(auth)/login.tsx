@@ -3,13 +3,13 @@ import { login } from "@/src/services/auth.service";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -35,8 +35,8 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style="">Login</Text>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>LOGIN</Text>
 
       <TextInput
         placeholder="Email"
@@ -63,10 +63,10 @@ export default function LoginScreen() {
         <Text style="">{loading ? "Logging in..." : "Login"}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/signup")}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push("/signup")}>
         <Text style="">Signup</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
     backgroundColor: 'white',
+    alignItems: 'center',
   },
   input: {
     borderWidth: 1,
@@ -83,6 +84,8 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
+    color: 'black',
+    width: '60%',
   },
   button: {
     backgroundColor: 'white',
@@ -90,5 +93,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginTop: 8,
+    borderColor: 'black',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 700,
+    marginBottom: 24,
+    textAlign: 'center',
   },
 });
