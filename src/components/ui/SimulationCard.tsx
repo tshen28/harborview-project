@@ -57,6 +57,7 @@ export default function SimulationCard({
       <Pressable
         style={[styles.card, locked && styles.locked]}
         onPress={handlePress}
+        disabled={locked}
       >
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.description}>{description}</Text>
