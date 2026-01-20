@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "794746806652",
+    "project_id": "harborview-project",
+    "storage_bucket": "harborview-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:794746806652:android:46151ba2197859810604f9",
+        "android_client_info": {
+          "package_name": "com.harborview.firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClb0iVqzGT1dy4ABsi9g_yTblhxi83jbA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
