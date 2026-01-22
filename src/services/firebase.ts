@@ -27,7 +27,6 @@ const firebaseConfig = {
   measurementId: EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = initializeAuth(app, {
