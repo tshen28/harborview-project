@@ -1,21 +1,21 @@
 import {
-    assignUserToSimulation,
-    getAllUsers,
-    removeUserFromSimulation,
+  assignUserToSimulation,
+  getAllUsers,
+  removeUserFromSimulation,
 } from "@/src/services/adminService";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 interface Props {
@@ -37,6 +37,9 @@ export default function ManageUsersModal({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [localAssignedUserIds, setLocalAssignedUserIds] = useState<string[]>(
+    [],
+  );
   const slideAnim = useState(() => new Animated.Value(600))[0]; // Start off-screen
   const fadeAnim = useState(() => new Animated.Value(0))[0]; // Start transparent
 
@@ -45,6 +48,9 @@ export default function ManageUsersModal({
       // Reset to starting position
       slideAnim.setValue(600);
       fadeAnim.setValue(0);
+
+      // Initialize local state with prop value
+      setLocalAssignedUserIds(assignedUserIds);
 
       loadUsers();
       // Animate in
@@ -75,7 +81,7 @@ export default function ManageUsersModal({
         }),
       ]).start();
     }
-  }, [visible, slideAnim, fadeAnim]);
+  }, [visible, slideAnim, fadeAnim, assignedUserIds]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -96,8 +102,9 @@ export default function ManageUsersModal({
     setActionLoading(userId);
     try {
       await assignUserToSimulation(simulationId, userId);
+      // Update local state immediately
+      setLocalAssignedUserIds([...localAssignedUserIds, userId]);
       Alert.alert("Success", "User assigned to simulation");
-      loadUsers(); // Refresh
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -118,8 +125,11 @@ export default function ManageUsersModal({
             setActionLoading(userId);
             try {
               await removeUserFromSimulation(simulationId, userId);
+              // Update local state immediately
+              setLocalAssignedUserIds(
+                localAssignedUserIds.filter((id) => id !== userId),
+              );
               Alert.alert("Success", "User access removed");
-              loadUsers(); // Refresh
             } catch (error: any) {
               Alert.alert("Error", error.message);
             } finally {
@@ -134,7 +144,7 @@ export default function ManageUsersModal({
   const filteredUsers = users.filter(
     (user) =>
       user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.name?.toLowerCase().includes(searchQuery.toLowerCase()),
+      user.displayName?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -180,14 +190,14 @@ export default function ManageUsersModal({
                 <Text style={styles.emptyText}>No users found</Text>
               ) : (
                 filteredUsers.map((user) => {
-                  const isAssigned = assignedUserIds.includes(user.id);
+                  const isAssigned = localAssignedUserIds.includes(user.id);
                   const isLoading = actionLoading === user.id;
 
                   return (
                     <View key={user.id} style={styles.userItem}>
                       <View style={styles.userInfo}>
                         <Text style={styles.userName}>
-                          {user.name || user.email}
+                          {user.displayName || user.email}
                         </Text>
                         <Text style={styles.userEmail}>{user.email}</Text>
                       </View>
@@ -238,7 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modal: {
-    backgroundColor: "#f1f8e9",
+    backgroundColor: "#dcedc8",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -286,7 +296,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: "#dcedc8",
+    backgroundColor: "#f1f8e9",
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 2,

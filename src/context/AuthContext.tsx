@@ -1,17 +1,17 @@
 import {
-    createUserWithEmailAndPassword,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    signOut,
-    User,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  User,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 import { auth, db } from "../services/firebase";
 import { initializeSimulations } from "../services/initializeSimulations";
@@ -22,7 +22,12 @@ export interface AuthContextType {
   user: User | null;
   role: UserRole;
   loading: boolean;
-  signup: (email: string, password: string, role: UserRole) => Promise<void>;
+  signup: (
+    email: string,
+    password: string,
+    role: UserRole,
+    displayName?: string,
+  ) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -83,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     userRole: UserRole,
+    displayName?: string,
   ) => {
     // Create user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
@@ -91,10 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     );
 
-    // Create user document in Firestore with role
+    // Create user document in Firestore with role and displayName
     await setDoc(doc(db, "users", userCredential.user.uid), {
       email: email,
       role: userRole,
+      displayName: displayName || null,
       createdAt: new Date().toISOString(),
     });
   };
