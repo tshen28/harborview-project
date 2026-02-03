@@ -1,6 +1,7 @@
 import { useAuth } from "@/src/context/AuthContext";
-import { simulations } from "@/src/data/simulations";
+import { subscribeToSimulations } from "@/src/services/adminService";
 import { db, storage } from "@/src/services/firebase";
+import Entypo from "@expo/vector-icons/Entypo";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -30,8 +31,10 @@ import {
 export default function SimulationDetails() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const simulation = simulations.find((s) => s.id === id);
   const { role } = useAuth();
+
+  const [simulation, setSimulation] = useState<any>(null);
+  const [simulationNotFound, setSimulationNotFound] = useState(false);
 
   const [notes, setNotes] = useState("");
   const [savedNotes, setSavedNotes] = useState("");
@@ -47,6 +50,35 @@ export default function SimulationDetails() {
   >({});
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [sectionLabels, setSectionLabels] = useState<string[]>([
+    "CBC",
+    "CMP",
+    "EKG",
+    "X-Ray",
+    "CT Scan",
+    "Blood Gas",
+    "Ultrasound",
+  ]);
+  const [isAddingSectionLabel, setIsAddingSectionLabel] = useState(false);
+  const [newSectionLabel, setNewSectionLabel] = useState("");
+
+  // Subscribe to simulation data with real-time updates
+  useEffect(() => {
+    if (!id) return;
+
+    const unsubscribe = subscribeToSimulations((simulations) => {
+      const found = simulations.find((s) => s.id === id);
+      if (found) {
+        setSimulation(found);
+        setSimulationNotFound(false);
+      } else {
+        setSimulation(null);
+        setSimulationNotFound(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [id]);
 
   // Load saved notes from Firestore
   useEffect(() => {
@@ -107,14 +139,6 @@ export default function SimulationDetails() {
     return () => unsubscribe();
   }, [id, simulation]);
 
-  if (!simulation) {
-    return (
-      <View style={styles.blank}>
-        <Text>Simulation not found.</Text>
-      </View>
-    );
-  }
-
   const getDashboardForRole = () => {
     switch (role) {
       case "admin":
@@ -133,6 +157,27 @@ export default function SimulationDetails() {
       router.replace(getDashboardForRole());
     }
   };
+
+  if (simulationNotFound) {
+    return (
+      <View style={styles.blank}>
+        <Text style={styles.notFoundText}>
+          Simulation not found or has been deleted.
+        </Text>
+        <Pressable style={styles.backToDashboardButton} onPress={handleReturn}>
+          <Text style={styles.backToDashboardText}>Return to Dashboard</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (!simulation) {
+    return (
+      <View style={styles.blank}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   const handleEditSection = (label: string) => {
     setEditingSection(label);
@@ -173,6 +218,82 @@ export default function SimulationDetails() {
   const handleCancelSectionEdit = () => {
     setEditingSection(null);
     setEditValue("");
+  };
+
+  const handleAddSectionLabel = () => {
+    setIsAddingSectionLabel(true);
+  };
+
+  const handleSaveNewSectionLabel = async () => {
+    if (!id || !newSectionLabel.trim()) return;
+
+    const trimmedLabel = newSectionLabel.trim();
+
+    // Check if label already exists
+    if (sectionLabels.includes(trimmedLabel)) {
+      Alert.alert("Error", "This section label already exists");
+      return;
+    }
+
+    try {
+      // Add to local state
+      const updatedLabels = [...sectionLabels, trimmedLabel];
+      setSectionLabels(updatedLabels);
+
+      // Initialize section in Firestore
+      const sectionsRef = doc(db, "simulationSections", id as string);
+      await setDoc(sectionsRef, {
+        ...sections,
+        [trimmedLabel]: { value: "", locked: false },
+      });
+
+      setNewSectionLabel("");
+      setIsAddingSectionLabel(false);
+      Alert.alert("Success", "Section label added");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  const handleCancelAddSectionLabel = () => {
+    setNewSectionLabel("");
+    setIsAddingSectionLabel(false);
+  };
+
+  const handleDeleteSectionLabel = async (label: string) => {
+    if (!id) return;
+
+    Alert.alert(
+      "Delete Section",
+      `Are you sure you want to delete the "${label}" section? This will permanently remove all data in this section.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Remove from local state
+              const updatedLabels = sectionLabels.filter((l) => l !== label);
+              setSectionLabels(updatedLabels);
+
+              // Remove from sections state
+              const updatedSections = { ...sections };
+              delete updatedSections[label];
+              setSections(updatedSections);
+
+              // Update Firestore
+              const sectionsRef = doc(db, "simulationSections", id as string);
+              await setDoc(sectionsRef, updatedSections);
+
+              Alert.alert("Success", "Section deleted");
+            } catch (error: any) {
+              Alert.alert("Error", error.message);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handlePickImage = async () => {
@@ -557,16 +678,51 @@ export default function SimulationDetails() {
           </View>
         ) : null}
 
+        {/* Add Section Label Button - Admin Only */}
+        {role === "admin" && (
+          <View style={styles.addSectionContainer}>
+            {isAddingSectionLabel ? (
+              <View style={styles.addSectionForm}>
+                <TextInput
+                  style={styles.addSectionInput}
+                  value={newSectionLabel}
+                  onChangeText={setNewSectionLabel}
+                  placeholder="New label..."
+                  autoFocus
+                />
+                <View style={styles.addSectionButtons}>
+                  <Pressable
+                    style={styles.addSectionCancelButton}
+                    onPress={handleCancelAddSectionLabel}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.addSectionSaveButton,
+                      !newSectionLabel.trim() && styles.saveButtonDisabled,
+                    ]}
+                    onPress={handleSaveNewSectionLabel}
+                    disabled={!newSectionLabel.trim()}
+                  >
+                    <Text style={styles.saveButtonText}>Add</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                style={styles.addSectionButton}
+                onPress={handleAddSectionLabel}
+              >
+                <Entypo name="plus" size={20} color="black" />
+                <Text style={styles.addSectionButtonText}>Add New Label</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         {/* Dynamic Sections */}
-        {[
-          "CBC",
-          "CMP",
-          "EKG",
-          "X-Ray",
-          "CT Scan",
-          "Blood Gas",
-          "Ultrasound",
-        ].map((label) => (
+        {sectionLabels.map((label) => (
           <SectionComponent
             key={label}
             label={label}
@@ -580,6 +736,7 @@ export default function SimulationDetails() {
             onCancel={handleCancelSectionEdit}
             onToggleLock={() => handleToggleSectionLock(label)}
             onEditValueChange={setEditValue}
+            onDelete={() => handleDeleteSectionLabel(label)}
           />
         ))}
       </ScrollView>
@@ -602,6 +759,7 @@ function SectionComponent({
   onCancel,
   onToggleLock,
   onEditValueChange,
+  onDelete,
 }: {
   label: string;
   value?: string;
@@ -614,6 +772,7 @@ function SectionComponent({
   onCancel?: () => void;
   onToggleLock?: () => void;
   onEditValueChange?: (value: string) => void;
+  onDelete?: () => void;
 }) {
   const showValue = isAdmin || !locked;
 
@@ -632,6 +791,9 @@ function SectionComponent({
                 size={36}
                 color={locked ? "grey" : "black"}
               />
+            </Pressable>
+            <Pressable onPress={onDelete} style={styles.deleteIconButton}>
+              <Ionicons name="trash" size={22} color="red" />
             </Pressable>
           </View>
         )}
@@ -672,10 +834,14 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    backgroundColor: "#dcedc8",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 70,
   },
   notesSection: {
     marginBottom: 20,
-    backgroundColor: "#dcedc8",
+    backgroundColor: "#f1f8e9",
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
@@ -713,6 +879,11 @@ const styles = StyleSheet.create({
   editIconButton: {
     padding: 4,
     left: 6,
+    top: 4,
+  },
+  deleteIconButton: {
+    padding: 2,
+    left: -6,
     top: 4,
   },
   sectionInput: {
@@ -786,7 +957,7 @@ const styles = StyleSheet.create({
   readOnlyNotes: {
     backgroundColor: "#f1f8e9",
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "black",
     minHeight: 120,
@@ -797,7 +968,7 @@ const styles = StyleSheet.create({
   },
   savedNotesSection: {
     marginBottom: 20,
-    backgroundColor: "#dcedc8",
+    backgroundColor: "#f1f8e9",
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
@@ -807,7 +978,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 2,
   },
   savedNotesText: {
     fontSize: 16,
@@ -829,7 +1000,7 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f8e9",
+    borderBottomColor: "black",
     paddingBottom: 8,
   },
   title: {
@@ -840,11 +1011,28 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
   label: {
-    fontSize: 16,
-    marginBottom: 12,
+    padding: 10,
+    top: -4,
+    left: -10,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  notFoundText: {
+    fontSize: 18,
     color: "black",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  backToDashboardButton: {
+    backgroundColor: "black",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  backToDashboardText: {
+    color: "white",
+    fontSize: 16,
     fontWeight: "600",
-    textDecorationLine: "underline",
   },
   value: {
     color: "black",
@@ -953,5 +1141,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "black",
     textDecorationLine: "underline",
+  },
+  addSectionContainer: {
+    marginBottom: 16,
+  },
+  addSectionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#f1f8e9",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "black",
+  },
+  addSectionButtonText: {
+    color: "black",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  addSectionForm: {
+    backgroundColor: "#dcedc8",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "black",
+  },
+  addSectionInput: {
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: "#f1f8e9",
+    marginBottom: 12,
+  },
+  addSectionButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  addSectionCancelButton: {
+    flex: 1,
+    backgroundColor: "#f1f8e9",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "black",
+    alignItems: "center",
+  },
+  addSectionSaveButton: {
+    flex: 1,
+    backgroundColor: "black",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
   },
 });

@@ -1,5 +1,6 @@
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
@@ -13,6 +14,7 @@ interface Props {
   isAdmin?: boolean;
   onEdit?: (id: string) => void;
   onToggleLock?: (id: string, locked: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function SimulationCard({
@@ -24,6 +26,7 @@ export default function SimulationCard({
   isAdmin = false,
   onEdit,
   onToggleLock,
+  onDelete,
 }: Props) {
   const router = useRouter();
 
@@ -43,6 +46,11 @@ export default function SimulationCard({
   const handleToggleLock = (e: any) => {
     e.stopPropagation();
     onToggleLock?.(id, !locked);
+  };
+
+  const handleDelete = (e: any) => {
+    e.stopPropagation();
+    onDelete?.(id);
   };
 
   return (
@@ -68,6 +76,9 @@ export default function SimulationCard({
                 size={36}
                 color={locked ? "grey" : "black"}
               />
+            </Pressable>
+            <Pressable style={styles.deleteButton} onPress={handleDelete}>
+              <Ionicons name="trash" size={24} color="#d32f2f" />
             </Pressable>
           </View>
         )}
@@ -104,7 +115,7 @@ const styles = StyleSheet.create({
   penIcon: {
     position: "absolute",
     right: -5,
-    top: "35%",
+    top: 8,
     fontSize: 20,
     color: "black",
   },
@@ -124,6 +135,11 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 4,
+  },
+  deleteButton: {
+    padding: 0,
+    left: -8,
+    top: 6,
   },
   closeButton: {
     marginTop: 12,
