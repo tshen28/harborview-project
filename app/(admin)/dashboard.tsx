@@ -5,20 +5,21 @@ import EditSimulationModal from "@/src/components/ui/EditSimulationModal";
 import SimulationCard from "@/src/components/ui/SimulationCard";
 import { useAuth } from "@/src/context/AuthContext";
 import {
-    subscribeToSimulations,
-    toggleSimulationLock,
+  deleteSimulation,
+  subscribeToSimulations,
+  toggleSimulationLock,
 } from "@/src/services/adminService";
 import Entypo from "@expo/vector-icons/Entypo";
 import { Redirect } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -80,6 +81,34 @@ export default function AdminLayout() {
     }
   };
 
+  const handleDelete = async (simId: string) => {
+    const sim = simulations.find((s) => s.id === simId);
+    const simTitle = sim?.title || "this simulation";
+
+    Alert.alert(
+      "Delete",
+      `Are you sure you want to delete "${simTitle}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteSimulation(simId);
+              Alert.alert("Success", "Simulation deleted successfully.");
+            } catch (error: any) {
+              Alert.alert(
+                "Error",
+                "Failed to delete simulation: " + error.message,
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleSave = () => {
     setEditModalVisible(false);
     // In production, refresh simulation data here
@@ -127,6 +156,7 @@ export default function AdminLayout() {
               isAdmin={true}
               onEdit={handleEdit}
               onToggleLock={handleToggleLock}
+              onDelete={handleDelete}
             />
           ))
         )}

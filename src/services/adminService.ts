@@ -1,14 +1,14 @@
 import { db } from "@/src/services/firebase";
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-  setDoc,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    onSnapshot,
+    query,
+    setDoc,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 
 export interface SimulationData {
@@ -98,6 +98,25 @@ export const addImageToSimulation = async (simId: string, imageUrl: string) => {
   });
 };
 
+// Delete simulation and all associated data
+export const deleteSimulation = async (simId: string) => {
+  try {
+    // Delete the simulation document
+    const simRef = doc(db, "simulations", simId);
+    await updateDoc(simRef, {
+      deleted: true,
+      deletedAt: new Date().toISOString(),
+    });
+
+    // Note: We're soft-deleting by marking as deleted rather than hard-deleting
+    // This preserves data integrity and allows for recovery if needed
+    // Associated data (notes, sections) will remain but won't be accessible
+  } catch (error: any) {
+    console.error("Error deleting simulation:", error);
+    throw new Error(error.message);
+  }
+};
+
 // Subscribe to all simulations with real-time updates
 export const subscribeToSimulations = (
   callback: (simulations: any[]) => void,
@@ -112,10 +131,12 @@ export const subscribeToSimulations = (
         snapshot.docs.length,
         "documents",
       );
-      const sims = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const sims = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((sim: any) => !sim.deleted); // Filter out deleted simulations
       console.log("Parsed simulations:", sims);
       callback(sims);
     },
