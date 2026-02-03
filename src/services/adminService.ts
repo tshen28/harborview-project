@@ -1,20 +1,21 @@
 import { db } from "@/src/services/firebase";
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    onSnapshot,
-    query,
-    setDoc,
-    updateDoc,
-    where,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 
 export interface SimulationData {
   title: string;
   description: string;
   assignedTo: string;
+  assignedUserIds?: string[]; // Specific user IDs who have access
   locked: boolean;
   files?: string[];
   images?: string[];
@@ -144,4 +145,74 @@ export const subscribeToSimulations = (
       console.error("Firestore listener error:", error);
     },
   );
+};
+
+// Add user to simulation's assignedUserIds
+export const assignUserToSimulation = async (simId: string, userId: string) => {
+  try {
+    const simRef = doc(db, "simulations", simId);
+    const simDoc = await getDoc(simRef);
+
+    if (!simDoc.exists()) {
+      throw new Error("Simulation not found");
+    }
+
+    const currentData = simDoc.data();
+    const assignedUserIds = currentData.assignedUserIds || [];
+
+    if (!assignedUserIds.includes(userId)) {
+      await updateDoc(simRef, {
+        assignedUserIds: [...assignedUserIds, userId],
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error assigning user:", error);
+    throw error;
+  }
+};
+
+// Remove user from simulation's assignedUserIds
+export const removeUserFromSimulation = async (
+  simId: string,
+  userId: string,
+) => {
+  try {
+    const simRef = doc(db, "simulations", simId);
+    const simDoc = await getDoc(simRef);
+
+    if (!simDoc.exists()) {
+      throw new Error("Simulation not found");
+    }
+
+    const currentData = simDoc.data();
+    const assignedUserIds = currentData.assignedUserIds || [];
+
+    await updateDoc(simRef, {
+      assignedUserIds: assignedUserIds.filter((id: string) => id !== userId),
+      updatedAt: new Date().toISOString(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error removing user:", error);
+    throw error;
+  }
+};
+
+// Get all users (for user selection in UI)
+export const getAllUsers = async () => {
+  try {
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error: any) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
 };

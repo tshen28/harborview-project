@@ -10,11 +10,13 @@ interface Props {
   title: string;
   description: string;
   assignedTo?: string;
+  assignedUserIds?: string[];
   locked?: boolean;
   isAdmin?: boolean;
   onEdit?: (id: string) => void;
   onToggleLock?: (id: string, locked: boolean) => void;
   onDelete?: (id: string) => void;
+  onManageUsers?: (id: string) => void;
 }
 
 export default function SimulationCard({
@@ -22,11 +24,13 @@ export default function SimulationCard({
   title,
   description,
   assignedTo,
+  assignedUserIds,
   locked,
   isAdmin = false,
   onEdit,
   onToggleLock,
   onDelete,
+  onManageUsers,
 }: Props) {
   const router = useRouter();
 
@@ -53,6 +57,11 @@ export default function SimulationCard({
     onDelete?.(id);
   };
 
+  const handleManageUsers = (e: any) => {
+    e.stopPropagation();
+    onManageUsers?.(id);
+  };
+
   return (
     <View>
       <Pressable
@@ -61,12 +70,29 @@ export default function SimulationCard({
       >
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.description}>{description}</Text>
+
+        {assignedUserIds && assignedUserIds.length > 0 && (
+          <View style={styles.userBadge}>
+            <FontAwesome5 name="users-cog" size={14} color="#666" />
+            <Text style={styles.userCount}>
+              {assignedUserIds.length} user
+              {assignedUserIds.length !== 1 ? "s" : ""}
+            </Text>
+          </View>
+        )}
+
         {locked && !isAdmin && (
           <EvilIcons name="lock" style={styles.lockIcon}></EvilIcons>
         )}
 
         {isAdmin && (
           <View style={styles.adminControls}>
+            <Pressable
+              style={[styles.iconButton, styles.usersIconButton]}
+              onPress={handleManageUsers}
+            >
+              <FontAwesome5 name="users-cog" size={24} color="black" />
+            </Pressable>
             <Pressable style={styles.iconButton} onPress={handleEdit}>
               <FontAwesome5 name="pen" style={styles.penIcon} />
             </Pressable>
@@ -111,10 +137,21 @@ const styles = StyleSheet.create({
   },
   description: {
     color: "black",
+    marginTop: 6,
+  },
+  userBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+  },
+  userCount: {
+    fontSize: 12,
+    color: "#666",
   },
   penIcon: {
     position: "absolute",
-    right: -5,
+    right: -10,
     top: 8,
     fontSize: 20,
     color: "black",
@@ -132,6 +169,9 @@ const styles = StyleSheet.create({
     top: 12,
     flexDirection: "row",
     gap: 8,
+  },
+  usersIconButton: {
+    top: 2,
   },
   iconButton: {
     padding: 4,
