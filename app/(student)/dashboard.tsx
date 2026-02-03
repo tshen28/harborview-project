@@ -32,9 +32,15 @@ export default function StudentDashboard() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  const studentSims = simulations.filter(
-    (sim) => sim.assignedTo === "student" || sim.assignedTo === "all",
-  );
+  // Filter simulations: show if assignedTo is "all" or "student",
+  // OR if the current user's ID is in assignedUserIds array
+  const studentSims = simulations.filter((sim) => {
+    const hasGeneralAccess =
+      sim.assignedTo === "student" || sim.assignedTo === "all";
+    const hasSpecificAccess =
+      sim.assignedUserIds && sim.assignedUserIds.includes(currentUser.uid);
+    return hasGeneralAccess || hasSpecificAccess;
+  });
 
   return (
     <SafeAreaView style={styles.container}>

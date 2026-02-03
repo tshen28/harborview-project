@@ -2,6 +2,7 @@
 import CreateSimulationModal from "@/src/components/ui/CreateSimulationModal";
 import DashboardHeader from "@/src/components/ui/DashboardHeader";
 import EditSimulationModal from "@/src/components/ui/EditSimulationModal";
+import ManageUsersModal from "@/src/components/ui/ManageUsersModal";
 import SimulationCard from "@/src/components/ui/SimulationCard";
 import { useAuth } from "@/src/context/AuthContext";
 import {
@@ -30,6 +31,7 @@ export default function AdminLayout() {
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [manageUsersModalVisible, setManageUsersModalVisible] = useState(false);
   const [selectedSimulation, setSelectedSimulation] = useState<any>(null);
   const [simulations, setSimulations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +111,14 @@ export default function AdminLayout() {
     );
   };
 
+  const handleManageUsers = (simId: string) => {
+    const sim = simulations.find((s) => s.id === simId);
+    if (sim) {
+      setSelectedSimulation(sim);
+      setManageUsersModalVisible(true);
+    }
+  };
+
   const handleSave = () => {
     setEditModalVisible(false);
     // In production, refresh simulation data here
@@ -152,11 +162,13 @@ export default function AdminLayout() {
               title={sim.title}
               description={sim.description}
               assignedTo={sim.assignedTo}
+              assignedUserIds={sim.assignedUserIds}
               locked={sim.locked}
               isAdmin={true}
               onEdit={handleEdit}
               onToggleLock={handleToggleLock}
               onDelete={handleDelete}
+              onManageUsers={handleManageUsers}
             />
           ))
         )}
@@ -178,6 +190,16 @@ export default function AdminLayout() {
         onClose={() => setCreateModalVisible(false)}
         onCreate={handleCreateSave}
       />
+
+      {selectedSimulation && (
+        <ManageUsersModal
+          visible={manageUsersModalVisible}
+          onClose={() => setManageUsersModalVisible(false)}
+          simulationId={selectedSimulation.id}
+          simulationTitle={selectedSimulation.title}
+          assignedUserIds={selectedSimulation.assignedUserIds || []}
+        />
+      )}
     </SafeAreaView>
   );
 }

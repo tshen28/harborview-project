@@ -1,3 +1,4 @@
+import ForgotPasswordModal from "@/src/components/ui/ForgotPasswordModal";
 import { useAuth } from "@/src/context/AuthContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
@@ -18,6 +19,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   useEffect(() => {
     console.log("Login redirect effect - user:", user?.email, "role:", role);
@@ -85,6 +87,11 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
       />
+
+      <Pressable onPress={() => setShowForgotModal(true)}>
+        <Text style={styles.forgotLink}>Forgot username or password?</Text>
+      </Pressable>
+
       <View style={styles.buttonRow}>
         <Pressable
           style={styles.button}
@@ -105,6 +112,11 @@ export default function LoginScreen() {
           Create an Account.
         </Text>
       </Text>
+
+      <ForgotPasswordModal
+        visible={showForgotModal}
+        onClose={() => setShowForgotModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -171,5 +183,12 @@ const styles = StyleSheet.create({
   createLink: {
     color: "blue",
     textDecorationLine: "underline",
+  },
+  forgotLink: {
+    color: "blue",
+    textDecorationLine: "underline",
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: "center",
   },
 });

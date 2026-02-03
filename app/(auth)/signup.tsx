@@ -3,15 +3,15 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -156,7 +156,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#aed581",
   },
   keyboardView: {
     flex: 1,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 700,
+    fontWeight: "700",
     marginBottom: 18,
     textAlign: "left",
   },
@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     height: 48,
     paddingHorizontal: 12,
+    backgroundColor: "#f1f8e9",
   },
   buttonRow: {
     flexDirection: "row",
@@ -203,14 +204,14 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     padding: 2,
-    fontWeight: 500,
+    fontWeight: "500",
     color: "white",
   },
   disabledButton: {
-    opacity: 0.5,
+    opacity: 0.7,
   },
   cancelButton: {
-    backgroundColor: "white",
+    backgroundColor: "#f1f8e9",
     padding: 12,
     borderRadius: 30,
     alignItems: "center",
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     padding: 2,
-    fontWeight: 500,
+    fontWeight: "500",
     color: "black",
   },
 });
