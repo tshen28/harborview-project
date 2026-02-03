@@ -59,7 +59,7 @@ export default function SignupScreen() {
     setLoading(true);
 
     try {
-      await authSignup(email, password, role);
+      await authSignup(email, password, role, displayName);
     } catch (error: any) {
       Alert.alert("Signup Failed", error.message || "An error occurred");
     } finally {

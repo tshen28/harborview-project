@@ -6,15 +6,15 @@ import * as ImagePicker from "expo-image-picker";
 import { collection, doc, setDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 interface Props {
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     color: "black",
   },
   uploadSection: {
-    marginTop: 20,
+    marginTop: 8,
   },
   uploadButtons: {
     flexDirection: "row",
